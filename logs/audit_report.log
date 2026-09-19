@@ -1,0 +1,14 @@
+Summary Report
+======================
+Range of time in logs: 09/19/2026 04:00:00.000 - 09/19/2026 04:30:00.000
+Selected time for report: 09/19/2026 04:00:00.000 - 09/19/2026 04:30:00.000
+Number of changes in configuration: 2
+Number of changes to accounts: 1
+Number of failed logins: 5
+Number of authentications: 1
+Number of users: 2
+Number of terminals: 1
+Number of host names: 1
+Number of executable names: 6
+Number of commands: 8
+Number of event types: 12
