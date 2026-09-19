@@ -1,0 +1,15 @@
+# /etc/ssh/sshd_config - SSH Security Hardening Parameters
+# Target: Ubuntu Server 24.04 / 22.04 LTS
+
+LogLevel INFO
+LoginGraceTime 60
+PermitRootLogin no
+MaxAuthTries 4
+MaxSessions 10
+PermitEmptyPasswords no
+KbdInteractiveAuthentication no
+UsePAM yes
+ClientAliveInterval 15
+ClientAliveCountMax 3
+X11Forwarding yes
+PrintMotd no
