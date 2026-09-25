@@ -1,5 +1,10 @@
 # Linux Server Security Hardening (Auditd, UFW, Fail2Ban & SSH)
 
+![Ubuntu Server](https://img.shields.io/badge/Ubuntu-Server_LTS-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Auditd](https://img.shields.io/badge/Auditd-CIS_Benchmark_Rules-brightgreen?style=for-the-badge)
+![Fail2Ban](https://img.shields.io/badge/Fail2Ban-UFW_Binding-red?style=for-the-badge)
+![OpenSSH](https://img.shields.io/badge/OpenSSH-Hardened-blue?style=for-the-badge&logo=openssh&logoColor=white)
+
 Configurations, audit rules, and intrusion prevention policies implemented on an Ubuntu Server VirtualBox virtual machine (`192.168.56.106`) to establish baseline OS hardening and event auditing.
 
 ---
