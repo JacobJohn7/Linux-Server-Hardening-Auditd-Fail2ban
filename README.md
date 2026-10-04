@@ -5,7 +5,7 @@
 ![Fail2Ban](https://img.shields.io/badge/Fail2Ban-UFW_Binding-red?style=for-the-badge)
 ![OpenSSH](https://img.shields.io/badge/OpenSSH-Hardened-blue?style=for-the-badge&logo=openssh&logoColor=white)
 
-Configurations, audit rules, and intrusion prevention policies implemented on an Ubuntu Server VirtualBox virtual machine (`192.168.56.106`) to establish baseline OS hardening and event auditing.
+Configurations, audit rules, kernel parameters, and intrusion prevention policies implemented on an Ubuntu Server VirtualBox virtual machine (`192.168.56.106`) to establish baseline OS hardening and event auditing.
 
 ---
 
@@ -138,7 +138,49 @@ Loaded rules using `sudo augenrules --load` and verified via `sudo auditctl -l`:
 
 ---
 
+## 5. Kernel Network Stack & Memory Protection (`config/99-security-hardening.conf`)
+
+Hardened kernel parameters via `/etc/sysctl.d/99-security-hardening.conf` to mitigate spoofing, ICMP abuse, and SYN flood attempts:
+
+```ini
+# Reverse path filtering (IP spoofing mitigation)
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.default.rp_filter = 1
+
+# Ignore ICMP echo broadcasts
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+
+# Source routing & ICMP redirect restrictions
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.all.send_redirects = 0
+
+# TCP SYN cookie protection & memory defense
+net.ipv4.tcp_syncookies = 1
+kernel.kptr_restrict = 2
+kernel.dmesg_restrict = 1
+kernel.yama.ptrace_scope = 1
+```
+
+Apply and verify kernel parameters:
+```bash
+sudo sysctl --system
+```
+
+---
+
+## 6. Automated Hardening Verification Script (`scripts/audit_check.sh`)
+
+Automated compliance verification script checking SSH parameters, UFW status, Fail2Ban jails, active Auditd watch keys, and kernel sysctl values:
+
+```bash
+./scripts/audit_check.sh
+```
+
+---
+
 ## Setup & Tuning Notes
 
 - **Fail2Ban + UFW Integration**: Setting `banaction = ufw` ensures Fail2Ban inserts iptables rules directly into UFW's rule chain rather than creating isolated `iptables-multiport` rules.
 - **Rule Loading via `augenrules`**: On modern Ubuntu releases, edit rules in `/etc/audit/rules.d/*.rules` and execute `augenrules --load` to compile them into `/etc/audit/audit.rules`.
+- **Sysctl Persistence**: Store kernel parameters in `/etc/sysctl.d/` rather than modifying runtime `/proc/sys` directly to ensure settings survive host reboots.
