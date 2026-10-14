@@ -1,10 +1,5 @@
 # Linux Server Security Hardening (Auditd, UFW, Fail2Ban & SSH)
 
-![Ubuntu Server](https://img.shields.io/badge/Ubuntu-Server_LTS-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
-![Auditd](https://img.shields.io/badge/Auditd-CIS_Benchmark_Rules-brightgreen?style=for-the-badge)
-![Fail2Ban](https://img.shields.io/badge/Fail2Ban-UFW_Binding-red?style=for-the-badge)
-![OpenSSH](https://img.shields.io/badge/OpenSSH-Hardened-blue?style=for-the-badge&logo=openssh&logoColor=white)
-
 Configurations, audit rules, kernel parameters, and intrusion prevention policies implemented on an Ubuntu Server VirtualBox virtual machine (`192.168.56.106`) to establish baseline OS hardening and event auditing.
 
 ---
@@ -27,9 +22,9 @@ ClientAliveInterval 15
 ClientAliveCountMax 3
 ```
 
-- **`PermitRootLogin no`**: Prevents direct root account SSH authentication.
-- **`MaxAuthTries 4`**: Limits failed authentication attempts per connection before terminating session.
-- **`ClientAliveInterval 15`**: Sends keepalive probe every 15 seconds; disconnects after 3 missed probes (`ClientAliveCountMax 3`).
+- `PermitRootLogin no`: Prevents direct root account SSH authentication.
+- `MaxAuthTries 4`: Limits failed authentication attempts per connection before terminating session.
+- `ClientAliveInterval 15`: Sends keepalive probe every 15 seconds; disconnects after 3 missed probes (`ClientAliveCountMax 3`).
 
 ---
 
@@ -179,7 +174,7 @@ Automated compliance verification script checking SSH parameters, UFW status, Fa
 
 ---
 
-## Setup & Tuning Notes
+## Practical Tuning Notes
 
 - **Fail2Ban + UFW Integration**: Setting `banaction = ufw` ensures Fail2Ban inserts iptables rules directly into UFW's rule chain rather than creating isolated `iptables-multiport` rules.
 - **Rule Loading via `augenrules`**: On modern Ubuntu releases, edit rules in `/etc/audit/rules.d/*.rules` and execute `augenrules --load` to compile them into `/etc/audit/audit.rules`.
