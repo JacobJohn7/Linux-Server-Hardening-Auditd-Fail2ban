@@ -166,10 +166,16 @@ sudo sysctl --system
 
 ## 6. Automated Hardening Verification Script (`scripts/audit_check.sh`)
 
-Automated compliance verification script checking SSH parameters, UFW status, Fail2Ban jails, active Auditd watch keys, and kernel sysctl values:
+Automated compliance verification checks SSH parameters, UFW status, Fail2Ban jails, active Auditd watch keys, and kernel sysctl values. For SSH, it reads the resolved daemon settings with `sshd -T -C`, so included drop-ins and applicable `Match` blocks are evaluated rather than only grepping the main config file. The check covers root login, empty passwords, authentication attempts, and client-alive limits; an unavailable host key makes effective settings unknown and is reported as a warning.
 
 ```bash
 ./scripts/audit_check.sh
+```
+
+Run the SSH regression check, which substitutes deliberately insecure effective settings and verifies each violation is reported:
+
+```bash
+./tests/test_audit_check_ssh.sh
 ```
 
 ---

@@ -41,38 +41,59 @@ echo " Timestamp: $(date -u '+%Y-%m-%d %H:%M:%SZ')"
 echo "=================================================="
 
 # 1. SSH Hardening Audit
-log_section "1. SSH Daemon Configuration (/etc/ssh/sshd_config)"
-if [ -r /etc/ssh/sshd_config ]; then
-    # Check PermitRootLogin
-    if grep -Eq '^[[:space:]]*PermitRootLogin[[:space:]]+no' /etc/ssh/sshd_config; then
-        log_pass "PermitRootLogin is explicitly disabled"
-    else
-        log_fail "PermitRootLogin is not set to 'no'"
-    fi
+log_section "1. Effective SSH Daemon Configuration"
+if command -v sshd >/dev/null 2>&1; then
+    # Minimal containers may have no host keys, preventing sshd -T from
+    # printing resolved settings. In that case, report unknown rather than
+    # treating an uninspected configuration as compliant or non-compliant.
+    ssh_error=""
+    ssh_effective=$(sshd -T -C "user=root,host=localhost,addr=127.0.0.1" 2>&1) || ssh_error="$ssh_effective"
+    if [ -n "$ssh_error" ] && ! grep -qi 'no hostkeys available' <<< "$ssh_error"; then
+        log_fail "sshd configuration validation failed: ${ssh_error//$'\n'/; }"
+    elif [ -z "$ssh_error" ]; then
+        ssh_setting() {
+            awk -v key="$1" '$1 == key { print $2; exit }' <<< "$ssh_effective"
+        }
 
-    # Check MaxAuthTries <= 4
-    max_tries=$(grep -E '^[[:space:]]*MaxAuthTries' /etc/ssh/sshd_config | awk '{print $2}' || echo "unconfigured")
-    if [ "$max_tries" != "unconfigured" ] && [ "$max_tries" -le 4 ]; then
-        log_pass "MaxAuthTries set to $max_tries (<= 4)"
-    else
-        log_fail "MaxAuthTries ($max_tries) exceeds CIS recommendation (<= 4)"
-    fi
+        root_login=$(ssh_setting permitrootlogin)
+        if [ "$root_login" = "no" ]; then
+            log_pass "PermitRootLogin is disabled (effective value: no)"
+        else
+            log_fail "PermitRootLogin is '$root_login' for root at localhost (expected: no)"
+        fi
 
-    # Check PermitEmptyPasswords
-    if grep -Eq '^[[:space:]]*PermitEmptyPasswords[[:space:]]+no' /etc/ssh/sshd_config; then
-        log_pass "PermitEmptyPasswords is explicitly set to 'no'"
-    else
-        log_fail "PermitEmptyPasswords is not set to 'no'"
-    fi
+        max_tries=$(ssh_setting maxauthtries)
+        if [[ "$max_tries" =~ ^[0-9]+$ ]] && (( max_tries >= 1 && max_tries <= 4 )); then
+            log_pass "MaxAuthTries is $max_tries (maximum: 4)"
+        else
+            log_fail "MaxAuthTries is '$max_tries' (expected: 1-4)"
+        fi
 
-    # Check ClientAliveInterval
-    if grep -Eq '^[[:space:]]*ClientAliveInterval[[:space:]]+1[0-9]{1,2}' /etc/ssh/sshd_config; then
-        log_pass "ClientAliveInterval configured with active timeout"
+        empty_passwords=$(ssh_setting permitemptypasswords)
+        if [ "$empty_passwords" = "no" ]; then
+            log_pass "PermitEmptyPasswords is disabled (effective value: no)"
+        else
+            log_fail "PermitEmptyPasswords is '$empty_passwords' (expected: no)"
+        fi
+
+        alive_interval=$(ssh_setting clientaliveinterval)
+        if [[ "$alive_interval" =~ ^[0-9]+$ ]] && (( alive_interval >= 1 && alive_interval <= 15 )); then
+            log_pass "ClientAliveInterval is ${alive_interval}s (maximum: 15s)"
+        else
+            log_fail "ClientAliveInterval is '$alive_interval' (expected: 1-15 seconds)"
+        fi
+
+        alive_count=$(ssh_setting clientalivecountmax)
+        if [[ "$alive_count" =~ ^[0-9]+$ ]] && (( alive_count >= 1 && alive_count <= 3 )); then
+            log_pass "ClientAliveCountMax is $alive_count (maximum: 3)"
+        else
+            log_fail "ClientAliveCountMax is '$alive_count' (expected: 1-3)"
+        fi
     else
-        log_warn "ClientAliveInterval not set or exceeds recommended threshold"
+        log_warn "sshd -T cannot report effective settings: host keys are unavailable"
     fi
 else
-    log_fail "Cannot read /etc/ssh/sshd_config (permission denied or missing)"
+    log_fail "sshd binary not found; effective SSH settings could not be validated"
 fi
 
 # 2. UFW Firewall Audit
